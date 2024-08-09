@@ -25,27 +25,27 @@ int main(int argc, char *argv[]) {
 	char *buf;
 
 	if (argc < 2) {
-		puts("Provide a port number.");
+		puts("Provide a port number");
 		return -1;
 	}
 
 	port = strtol(argv[1], NULL, 10);
 
 	if (!port) {
-		puts("Choose a non zero port number.");
+		puts("Choose a non zero port number");
 		return -1;
 	}
 
 	f = fopen(HTML_FILE,"r");
 	if (!f) {
-		perror("Failed to open file.");
+		perror("Failed to open file");
 		return -1;
 	}
 
 	fstat(fileno(f), &st);
 	buf = malloc(st.st_size + 1);
 	if (!buf) {
-		perror("Memory allocation failed.");
+		perror("Memory allocation failed");
 		return -1;
 	}
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	ssock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (ssock == -1) {
-		perror("Error creating a socket.");
+		perror("Error creating a socket");
 		return -1;
 	}
 
@@ -68,25 +68,33 @@ int main(int argc, char *argv[]) {
 	server.sin_port = htons(port);
 
 	if (bind(ssock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-		perror("Bind failed.");
+		perror("Bind failed");
 		return -1;
 	}
 
 	if (listen(ssock, MAX_CON) < 0) {
-		perror("Listen failed.");
+		perror("Listen failed");
 		return -1;
 	}
 
 	while (1) {
 		csock = accept(ssock, (struct sockaddr *)&client, &client_len);
 		if (csock < 0) {
-			perror("Accept failed.");
+			perror("Accept failed");
 			break;
 		}
 
-		send(csock, response, strlen(response), 0);
-		send(csock, buf, st.st_size + 1, 0);
-		send(csock, "\r\n",strlen("\r\n"),0);
+		if (send(csock, response, strlen(response), 0) < 0) {
+			perror("Send failed");
+			close(csock);
+			continue;
+		}
+
+		if (send(csock, buf, st.st_size + 1, 0) < 0) {
+			perror("Send failed");
+			close(csock);
+			continue;
+		};
 
 		close(csock);
 	}
