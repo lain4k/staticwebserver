@@ -43,13 +43,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	fstat(fileno(f), &st);
-	buf = malloc(st.st_size + 1);
+	buf = calloc(st.st_size + 1, 1);
 	if (!buf) {
 		perror("Memory allocation failed");
 		return -1;
 	}
 
-	memset(buf, '\0', st.st_size + 1);
 	fread(buf, st.st_size, 1, f);
 
 	ssock = socket(AF_INET, SOCK_STREAM, 0);
