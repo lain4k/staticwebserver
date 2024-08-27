@@ -17,12 +17,13 @@ const char *response =
 int main(int argc, char *argv[]) {
 	
 	unsigned int port;
-	int ssock, csock;
+	int ssock = -1, csock = -1;
 	struct sockaddr_in server, client;
 	struct stat st;
 	socklen_t client_len = sizeof(client);
 	FILE *f;
 	char *buf;
+	size_t read_size;
 
 	if (argc < 2) {
 		puts("Provide a port number");
@@ -39,23 +40,30 @@ int main(int argc, char *argv[]) {
 	f = fopen(HTML_FILE,"r");
 	if (!f) {
 		perror("Failed to open file");
-		return -1;
+		goto cleanup;
 	}
 
-	fstat(fileno(f), &st);
+	if (fstat(fileno(f), &st) == -1){
+		perror("Failed to get files stats");
+		goto cleanup;
+	};
+
 	buf = calloc(st.st_size + 1, 1);
 	if (!buf) {
 		perror("Memory allocation failed");
-		return -1;
+		goto cleanup;
 	}
 
-	fread(buf, st.st_size, 1, f);
+	read_size = fread(buf, 1, st.st_size, f);
+	if (read_size != st.st_size) {
+		perror("Failed to read entire file");
+		goto cleanup;
+	}
 
 	ssock = socket(AF_INET, SOCK_STREAM, 0);
-
 	if (ssock == -1) {
 		perror("Error creating a socket");
-		return -1;
+		goto cleanup;
 	}
 
 
@@ -68,12 +76,12 @@ int main(int argc, char *argv[]) {
 
 	if (bind(ssock, (struct sockaddr *)&server, sizeof(server)) < 0) {
 		perror("Bind failed");
-		return -1;
+		goto cleanup;
 	}
 
 	if (listen(ssock, MAX_CON) < 0) {
 		perror("Listen failed");
-		return -1;
+		goto cleanup;
 	}
 
 	while (1) {
@@ -89,7 +97,7 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		if (send(csock, buf, st.st_size + 1, 0) < 0) {
+		if (send(csock, buf, st.st_size, 0) < 0) {
 			perror("Send failed");
 			close(csock);
 			continue;
@@ -98,8 +106,11 @@ int main(int argc, char *argv[]) {
 		close(csock);
 	}
 
-	free(buf);
-	fclose(f);
+cleanup:
+	if (csock != -1) close(csock);
+	if (ssock != -1) close(ssock);
+	if (buf) free(buf);
+	if (f) fclose(f);
 
 	return 0;
 }
