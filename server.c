@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
 		perror("Listen failed");
 		goto cleanup;
 	}
+	
+	printf("Server started at http://localhost:%u\n", port);
 
 	while (1) {
 		csock = accept(ssock, (struct sockaddr *)&client, &client_len);
@@ -92,7 +94,12 @@ int main(int argc, char *argv[]) {
 		}
 
 		char req[2048];
-		recv(csock, req, sizeof(req), 0);
+		ssize_t r =  recv(csock, req, sizeof(req), 0);
+		if (r > 0) {
+			printf("\n--- Incoming Request ---\n%s\n", req);
+		}
+
+		printf("\n--- Outgoing Response ---\n%s\n", response);
 
 		if (send(csock, response, strlen(response), 0) < 0) {
 			perror("Send failed");
