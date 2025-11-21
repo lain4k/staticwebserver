@@ -91,6 +91,9 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
+		char req[2048];
+		recv(csock, req, sizeof(req), 0);
+
 		if (send(csock, response, strlen(response), 0) < 0) {
 			perror("Send failed");
 			close(csock);
