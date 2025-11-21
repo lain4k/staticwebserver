@@ -9,11 +9,6 @@
 #define MAX_CON 20
 #define HTML_FILE "index.html"
 
-const char *response =
-"HTTP/1.1 200 OK\r\n"
-"Content-Type: text/html\r\n"
-"Connection: close\r\n\r\n";
-
 int main(int argc, char *argv[]) {
 	
 	unsigned int port;
@@ -60,6 +55,14 @@ int main(int argc, char *argv[]) {
 		goto cleanup;
 	}
 
+	char r_header[256];
+	snprintf(r_header, sizeof(r_header),
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/html\r\n"
+		"Content-Length: %ld\r\n"
+		"Connection: close\r\n\r\n",
+		st.st_size);
+
 	ssock = socket(AF_INET, SOCK_STREAM, 0);
 	if (ssock == -1) {
 		perror("Error creating a socket");
@@ -99,9 +102,9 @@ int main(int argc, char *argv[]) {
 			printf("\n--- Incoming Request ---\n%s\n", req);
 		}
 
-		printf("\n--- Outgoing Response ---\n%s\n", response);
+		printf("\n--- Outgoing Response Header ---\n%s\n", r_header);
 
-		if (send(csock, response, strlen(response), 0) < 0) {
+		if (send(csock, r_header, strlen(r_header), 0) < 0) {
 			perror("Send failed");
 			close(csock);
 			continue;
