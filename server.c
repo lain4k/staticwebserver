@@ -27,14 +27,14 @@ int main(int argc, char *argv[]) {
 
 	if (argc < 2) {
 		puts("Provide a port number");
-		return -1;
+		return 1;
 	}
 
 	port = strtol(argv[1], NULL, 10);
 
-	if (!port) {
-		puts("Choose a non zero port number");
-		return -1;
+	if (port <=0 || port > 65535) {
+		puts("Port must be between 1 and 65535");
+		return 1;
 	}
 
 	f = fopen(HTML_FILE,"r");
